@@ -1,0 +1,48 @@
+import socket, sys, select
+
+class Connection():
+    def __init__(self,server_address, server_port):
+        self.s = socket.socket()
+        self.s.connect((server_address,server_port))
+    def send(self, msg):
+        self.s.send(msg.encode())
+    def read(self):
+        message = self.s.recv(2048).decode()
+        print(message)
+
+class Input():
+    def __init__(self, server_address, server_port):
+        self.connetion = connection
+    def read(self):
+        msg = input()
+        self.connection.send(msg)
+
+
+class Events():
+    def __init__(self):
+        self.readers = list()
+    def add_reader(r):
+        self.readers.append(r)
+    def run_forever()
+        while True:
+            readers, _, _ = select.select(self.readers, [],[])
+            for obj in read_objs:
+                obj.read()
+
+connection =  Connection('localhost', 1234)
+input_stdin = Input(connection)
+events = Events()
+events.add_reader(connection)
+events.add_reader(input_stdin)
+events.run_forever()
+
+s = socket.socket()
+s.connect(('localhost', 1234))
+while True:
+    readers, _, _ = select.select([sys.stdin, s], [],[])
+    for reader in readers:
+        if(reader is sys.stdin):
+            msg = input('> ')
+            s.send(msg.encode('utf8'))
+        else:
+            print(s.recv(2048).decode('utf8'))
