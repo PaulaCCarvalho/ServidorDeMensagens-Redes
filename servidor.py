@@ -1,21 +1,16 @@
 from socket import *
 import sys
 import threading
-
+from time import sleep
 
 def conexao(connectionSocket):
-    global flag
     mensagem = "Bem-Vindo ao Servidor de Mensagens!\n>> Informe a tag que deseja receber mensagens <<"
     connectionSocket.send(mensagem.encode('ascii'))
-    while flag:
-        try:
-            mensagem = connectionSocket.recv(2048).decode('ascii')
-            if(checkTag(mensagem, connectionSocket)):
-                continue
-            else:
-                flag = False
-        except:
-            continue
+    while True:
+        mensagem = connectionSocket.recv(2048).decode('ascii')
+        flag =  checkTag(mensagem, connectionSocket)
+        if(not flag):
+            break
 
 def checkTag(mensagem, connectionSocket):
     if (mensagem[0] == '+'):
@@ -68,11 +63,13 @@ def checkTag(mensagem, connectionSocket):
     
     elif (mensagem == '##kill'):
         print("Mata todo mundo!")
-        for cliente in dicionario_clientes.keys():
+        client_list = list(dicionario_clientes.keys())
+        global flag
+        flag = True
+        for cliente in client_list:
             cliente.send(mensagem.encode('ascii'))
             cliente.close()
             desconectar(cliente)
-        return False
     else:
         tags = []
         aux = mensagem.split(' ')
@@ -99,9 +96,22 @@ def transmitir(mensagem,tags, connectionSocket):
                         cliente.close()
                         desconectar(cliente)
 
+def aceitar():
+    global flag
+    while True:
+        connectionSocket, clienteAddress = serverSocket.accept()
+        
+        if(flag):
+            return
+
+        dicionario_clientes[connectionSocket] = []
+        print("Cliente " + clienteAddress[0] + " conectado!")
+
+        processo = threading.Thread(target=conexao, args=(connectionSocket,))
+        processo.start()
+     
 def desconectar(connectionSocket):
-    if connectionSocket in dicionario_clientes.keys():
-       dicionario_clientes.pop(dicionario_clientes[connectionSocket])
+    del dicionario_clientes[connectionSocket]
 
 if len(sys.argv) != 2:
     print("Modo correto para executar o programa: python3 servidor.py num_porta")
@@ -115,16 +125,15 @@ serverSocket.listen(100)
 
 dicionario_clientes = {}
 global flag
-flag = True
-while flag: 
-    connectionSocket, clienteAddress = serverSocket.accept()
-    
-    dicionario_clientes[connectionSocket] = []
-    print("Cliente " + clienteAddress[0] + " conectado!")
+flag = False   
 
-    processo = threading.Thread(target=conexao, args=(connectionSocket,))
-    processo.start()
-    
-connectionSocket.close()
-serverSocket.close()
-sys.exit()
+aceitar_thread = threading.Thread(target=aceitar)
+aceitar_thread.start()
+
+while True:
+    sleep(1)
+    if(flag):
+        print("abrindo novo socket")
+        clientSocket = socket(AF_INET, SOCK_STREAM)
+        clientSocket.connect(('127.0.0.1', serverPort))
+        break

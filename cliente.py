@@ -19,31 +19,22 @@ clientSocket.connect((serverName, serverPort))
 flag = True
 
 def receber():
-    global flag
-    while flag:
-        try:
-            mensagem = clientSocket.recv(2048).decode('ascii')
-            if(mensagem == '##kill'):
-                print("< Você será desconectado do Servidor de Mensagens!")
-                flag = False
-                clientSocket.close()
-                sys.exit('< Você foi desconectado do Servidor de Mensagens!')
-            else:
-                print('< '+ mensagem)
-        except:
-            print("Um error ocorreu")
-            clientSocket.close()
+    while True:
+        mensagem = clientSocket.recv(2048).decode('ascii')
+        if(mensagem == '##kill'):
+            print("< Você será desconectado do Servidor de Mensagens!")
             break
+        else:
+            print('< '+ mensagem)
     clientSocket.close()
-    sys.exit()
 
 def write():
-    global flag
-    while flag:
-        mensagem = input('> ')
-        clientSocket.send(mensagem.encode('ascii'))
-    clientSocket.close()
-    sys.exit()
+    while True:
+        try:
+            mensagem = input('> ')
+            clientSocket.send(mensagem.encode('ascii'))
+        except:
+            break
 
 receber_thread = threading.Thread(target=receber)
 receber_thread.start()
